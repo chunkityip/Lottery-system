@@ -186,25 +186,26 @@ class LotteryGame {
         if (age < 18) {
             System.out.println("Only people 18 or over can register to play the lottery");
             System.out.println("Exiting......");
-            System.exit(0);//forcing system to exit by 0 second
-        } //What if the user enter something not Integer such as Double , Character , String , long , bit , flot?
-
+            System.exit(0); // Exit the program if user is under 18
+        }
+    
         double fee = TICKET_PRICE;
-        
+    
+        // Move the user creation outside the loop
+        User user = new User(fullname, age);
+    
         while (true) {
-            //What if the user enter less then 3 ? (The min balance need to be 3. £2 as fee and £1 is balance)
             System.out.print("Enter the balance you want to play with: ");
             double balance = scanner.nextDouble();
-
+    
             if (balance < 3) {
                 System.out.println("Minimum balance must be £3 or more. Please try again.");
             } else if (balance < fee) {
                 System.out.println("Insufficient balance to buy tickets!");
                 break; // Exit loop if balance is insufficient
             } else {
-                User user = new User(fullname, age);
                 user.addBalance(balance);
-
+    
                 if (user.getBalance() >= fee) {
                     user.deductBalance(fee);
                     addToPrizeFund();
@@ -215,29 +216,29 @@ class LotteryGame {
                     System.out.println("Creating lucky-dip ticket...");
                     LotteryTicket ticket = new LotteryTicket();
                     Random random = new Random();
-
-                    //Using HashSet since not allow duplicate nubmer
+    
+                    // Generate 6 unique random numbers
                     Set<Integer> chosenNumbers = new HashSet<>();
-
-                    //this loop will continue creating random number util the size of set is 6
                     while (chosenNumbers.size() < 6) {
                         int randomNumber = random.nextInt(49) + 1;
                         chosenNumbers.add(randomNumber);
                     }
-
-                    //Missing addTicket() method , it may cause the issue of not showing ticket
-
+    
                     ticket.getNumbers().addAll(chosenNumbers);
+                    user.addTicket(ticket); // Add the ticket to the user's list of tickets
                     System.out.println("Lucky-dip ticket created with numbers: " + ticket.getNumbers());
                     System.out.println("Your balance after ticket purchase: £" + (user.getBalance() - fee));
-                    System.out.println("Current prize pool has: $" + prizeFund);
+                    System.out.println("Current prize pool has: £" + prizeFund);
                     System.out.println("-------------------------\n");
                     System.out.println("\n");
+                    users.add(user); // Add the user to the list of users
                     break;
                 }
             }
         }
     }
+    
+    
 
     // This method allow to add £2 from each ticket purchase to the prize fund
     public static void addToPrizeFund() {
@@ -246,22 +247,31 @@ class LotteryGame {
     
     private static void viewPurchasedTickets() {
         if (users.isEmpty()) {
-            System.out.println("No tickets purchased yet.");
+            System.out.println("\nNo users found.");
+            System.out.println("\n");
             return;
         }
-        
+    
+        boolean foundTickets = false;
         for (User user : users) {
-            System.out.println("User: " + user.fullname);
-            if (user.getTickets().isEmpty()) {
-                System.out.println("No tickets purchased by this user.");
-            } else {
-                for (LotteryTicket ticket : user.getTickets()) {
+            System.out.println("------------");
+            System.out.println("\nUser: " + user.fullname);
+            List<LotteryTicket> userTickets = user.getTickets();
+            if (!userTickets.isEmpty()) {
+                foundTickets = true;
+                for (LotteryTicket ticket : userTickets) {
                     System.out.println("Ticket Numbers: " + ticket.getNumbers());
                 }
             }
-            System.out.println("------------");
+            System.out.println("------------\n");
+        }
+    
+        if (!foundTickets) {
+            System.out.println("No tickets purchased yet.");
         }
     }
+    
+    
 
     private static void runLotteryGame(Scanner scanner) {
         System.out.println("Enter winning numbers (6 unique numbers between 1 and 49):");
