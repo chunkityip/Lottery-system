@@ -12,12 +12,16 @@ class User {
     private int age;
     private double balance;
     private List<LotteryTicket> tickets;
+    private int accountId;
+    private static int luckyDipWins;
+    private static int lastAccountId = 0;
 
     public User(String fullname, int age) {
         this.fullname = fullname;
         this.age = age;
         this.balance = 0.0;
         this.tickets = new ArrayList<>();
+        this.accountId = ++lastAccountId;
     }
 
     public void deductBalance(double amount) {
@@ -39,6 +43,12 @@ class User {
     public List<LotteryTicket> getTickets() {
         return tickets;
     }
+
+    public int getAccountId() {
+        return accountId;
+    }
+
+
 }
 
 class LotteryTicket {
@@ -82,19 +92,18 @@ class LotteryGame {
         int option = 0;
 
         do {
-            System.out.println("Weclome to Lottery System!");
-            System.out.println("\nChoose from these choices");
-            System.out.println("-------------------------\n");
+            System.out.println("Welcome to the Lottery System!");
+            System.out.println("Choose from these options:");
             System.out.println("1: Create lottery tickets");
             System.out.println("2: Create Lucky-dip lottery ticket");
             System.out.println("3: View purchased tickets");
             System.out.println("4: Run lottery game (admin only)");
             System.out.println("5: Report results (admin only)");
             System.out.println("6: Check if individual tickets won");
-            System.out.println("7: Exit");
-            System.out.println("-------------------------\n");
+            System.out.println("7: View game details (admin only)");
+            System.out.println("8: Exit");
             System.out.println();
-            
+
             try {
                 System.out.print("Please enter the service by number: ");
                 option = scanner.nextInt();
@@ -117,18 +126,22 @@ class LotteryGame {
                     case 6:
                         checkWinningTickets(scanner);
                         break;
-                case 7:
-                    System.out.println("Exiting...");
-                    break;
+                    case 7:
+                        viewGameDetails();
+                        break;
+                    case 8:
+                        System.out.println("Exiting...");
+                        break;
+                    default:
+                        System.out.println("Invalid choice! Please select again with options 1 to 8.");
                 }
             } catch (InputMismatchException e) {
-                System.out.println("Invalid choice! Please select again wtih option 1 to 7!");
+                System.out.println("Invalid choice! Please select again with options 1 to 8.");
                 scanner.next(); // Consume the invalid input
-                System.out.println("-------------------------\n");
-                System.out.println("\n");
             }
-        } while (option != 7);
+        } while (option != 8);
     }
+    
 
     //This method to follow user to enter:
     //1. How much they like to play (auto substract £2 as fee and put it into prize pool)
@@ -169,6 +182,7 @@ class LotteryGame {
                     user.addTicket(ticket);
                 }
                 users.add(user);
+                addToPrizeFund(fee * numTickets);
             } else {
                 System.out.println("Insufficient balance to buy tickets!");
         }
@@ -208,7 +222,7 @@ class LotteryGame {
     
                 if (user.getBalance() >= fee) {
                     user.deductBalance(fee);
-                    addToPrizeFund();
+                    addToPrizeFund(fee);
                     System.out.println("-------------------------\n");
                     System.out.println("Tickets purchased successfully!");
                     System.out.println("Remaining balance: £" + user.getBalance());
@@ -241,8 +255,8 @@ class LotteryGame {
     
 
     // This method allow to add £2 from each ticket purchase to the prize fund
-    public static void addToPrizeFund() {
-        prizeFund += 2.0; // Add £2 to the prize fund
+    public static void addToPrizeFund(double amount) {
+        prizeFund += amount; // Add £2 to the prize fund
     }
     
     private static void viewPurchasedTickets() {
@@ -289,6 +303,110 @@ class LotteryGame {
         System.out.println("Winning numbers set as: " + winningNumbers);
     }
 
+    private static double checkTicketWinnings(User user, List<Integer> ticketNumbers) {
+        int correctNumbers = 0;
+        for (int number : ticketNumbers) {
+            if (winningNumbers.contains(number)) {
+                correctNumbers++;
+            }
+        }
+        double winnings = 0.0;
+        switch (correctNumbers) {
+            case 2:
+                System.out.println("Congratulations! You've won a lucky dip for the next game!");
+                break;
+            case 3:
+                System.out.println("Congratulations! You've won £2!");
+                winnings = 2.0;
+                break;
+            case 4:
+            case 5:
+                System.out.println("Congratulations! You've won £4!");
+                winnings = 4.0;
+                break;
+            case 6:
+                System.out.println("Congratulations! You've won the jackpot!");
+                winnings = jackpotWinnings(users.size());
+                break;
+            default:
+                System.out.println("Sorry! You did not win this time.");
+        }
+        return winnings;
+    }
+
+    private static double jackpotWinnings(int numPlayers) {
+        double jackpot = prizeFund / numPlayers;
+        if (jackpot < 6.0) {
+            jackpot = 6.0;
+        }
+        prizeFund -= jackpot;
+        return jackpot;
+    }
+
+    private static void reportResults() {
+        System.out.println("Winning Numbers: " + winningNumbers);
+        double totalWinnings = 0.0;
+        for (User user : users) {
+            System.out.println("User: " + user.fullname);
+            double userWinnings = 0.0;
+            for (LotteryTicket ticket : user.getTickets()) {
+                List<Integer> numbers = ticket.getNumbers();
+                double ticketWinnings = checkTicketWinnings(user, numbers);
+                userWinnings += ticketWinnings;
+                if (ticketWinnings > 0) {
+                    System.out.println("Ticket Numbers: " + numbers + " - Correct Numbers: " + (numbers.size() - (6 - numbers.size()))
+                            + " - Winnings: £" + ticketWinnings);
+                }
+            }
+            System.out.println("Total Winnings: £" + userWinnings);
+            totalWinnings += userWinnings;
+        }
+        if (totalWinnings < 6.0 && prizeFund > 0) {
+            rollOverPrizeFund();
+        }
+    }
+
+    private static void rollOverPrizeFund() {
+        System.out.println("No jackpot winners. Prize fund rolls over to the next game.");
+    }
+
+    private static void checkWinningTickets(Scanner scanner) {
+        System.out.print("Enter your full name: ");
+        scanner.nextLine();
+        String fullname = scanner.nextLine();
+        User currentUser = null;
+        for (User user : users) {
+            if (user.fullname.equals(fullname)) {
+                currentUser = user;
+                break;
+            }
+        }
+        if (currentUser != null) {
+            System.out.print("Enter the numbers of your ticket: ");
+            List<Integer> ticketNumbers = new ArrayList<>();
+            for (int i = 0; i < 6; i++) {
+                int number = scanner.nextInt();
+                ticketNumbers.add(number);
+            }
+            double winnings = checkTicketWinnings(currentUser, ticketNumbers);
+            if (winnings > 0) {
+                System.out.println("Congratulations! You've won £" + winnings + "!");
+            } else {
+                System.out.println("Sorry! You did not win this time.");
+            }
+        } else {
+            System.out.println("User not found!");
+        }
+    }
+
+
+    private static void viewGameDetails() {
+        System.out.println("Prize Fund: £" + prizeFund);
+        System.out.println("Total Amount Given to Charity: £" + (TICKET_PRICE * users.size() - prizeFund));
+    }
+
+
+    /* 
     private static void reportResults() {
         System.out.println("Winning Numbers: " + winningNumbers);
         // Check each user's tickets for winning numbers
@@ -342,4 +460,5 @@ class LotteryGame {
             System.out.println("User not found!");
         }
     }
+    */
 }
