@@ -138,10 +138,10 @@ class LotteryGame {
                     default:
                         System.out.println("Invalid choice! Please select again with options 1 to 9.");
                 }
-            } catch (InputMismatchException e) {
-                System.out.println("Invalid choice! Please select again with options 1 to 9.");
+            } catch (InputMismatchException | NullPointerException e) {
+                System.out.println("Invalid choice! Please select again with options 1 to 9 or Make sure the winning numbers date!");
                 scanner.next();
-            }
+            } 
         } while (option != 9);
     }
 
@@ -368,42 +368,14 @@ class LotteryGame {
 
     //Has a problem
     private static double checkTicketWinnings(User user, List<Integer> ticketNumbers) {
-    int correctNumbers = 0;
-    for (int number : ticketNumbers) {
-        if (winningNumbers.contains(number)) {
-            correctNumbers++;
-        }
-    }
-    double winnings = 0.0;
-    boolean wonJackpot = false; // Flag to track if the user won the jackpot
-    switch (correctNumbers) {
-        case 2:
-            System.out.println("Congratulations! You've won a lucky dip for the next game!");
-            break;
-        case 3:
-            System.out.println("Congratulations! You've won £2!");
-            winnings = 2.0;
-            break;
-        case 4:
-        case 5:
-            System.out.println("Congratulations! You've won £4!");
-            winnings = 4.0;
-            break;
-        case 6:
-            if (!wonJackpot) { // Check if the jackpot has not been won yet
-                //System.out.println("Congratulations! You've won the jackpot!");
-                wonJackpot = true; // Set the flag to true since the jackpot has been won
+        int correctNumbers = 0;
+        for (int number : ticketNumbers) {
+            if (winningNumbers.contains(number)) {
+                correctNumbers++;
             }
-            winnings = jackpotWinnings(users.size());
-            break;
-        default:
-            System.out.println("Sorry! You did not win this time.");
+        }
+        return correctNumbers;
     }
-    if (winnings > 0 && !wonJackpot) { // Only display the winnings if the jackpot has not been won
-        System.out.println("Congratulations! You've won £" + winnings + "!");
-    }
-    return winnings;
-}
 
     
 
@@ -428,14 +400,14 @@ class LotteryGame {
                 double userWinnings = 0.0;
                 for (LotteryTicket ticket : user.getTickets()) {
                     List<Integer> numbers = ticket.getNumbers();
-                    double ticketWinnings = checkTicketWinnings(user, numbers);
-                    userWinnings += ticketWinnings;
-                    if (ticketWinnings > 0) {
-                        System.out.println("Ticket Numbers: " + numbers + " - Correct Numbers: " + (numbers.size() - (6 - numbers.size()))
-                                + " - Winnings: £" + ticketWinnings);
+                    double correctNumbers = checkTicketWinnings(user, numbers);
+                    double ticketWinnings = calculateWinnings(correctNumbers);
+                    userWinnings += ticketWinnings; // Update the user's total winnings
+                    if (correctNumbers != 2 && correctNumbers != 0) { // Check if correctNumbers is neither 2 nor 0
+                        System.out.println("Ticket Numbers: " + numbers + " - Correct Numbers: " + correctNumbers + " - Winnings: £" + ticketWinnings);
                     }
                 }
-                System.out.println("Total Winnings: £" + userWinnings);
+                System.out.println("Total Winnings: £" + userWinnings); // Concatenate the double to a String here
                 totalWinnings += userWinnings;
                 processedUsers.add(user); // Mark user as processed
             }
@@ -444,6 +416,54 @@ class LotteryGame {
             rollOverPrizeFund();
         }
     }
+    
+    
+
+    private static int convertToSwitchValue(double correctNumbers) {
+        // Convert double to int, considering rounding or casting as needed
+        int intValue = (int) correctNumbers; // Example: casting to int
+    
+        // Handle special cases or rounding errors as needed
+        // Example: handle double values that should map to the same int value
+    
+        return intValue;
+    }
+    
+    private static double calculateWinnings(double correctNumbers) {
+        double winnings = 0.0;
+        switch ((int) correctNumbers) { // Convert double to int for switch statement
+            case 2:
+                System.out.println("2 Number match! You get a free lucky dip!");
+                break;
+            case 3:
+                winnings = 2.0;
+                break;
+            case 4:
+                winnings = 4.0;
+                break;
+            case 5:
+                winnings = 6.0;
+                break;
+            case 6:
+                winnings = jackpotWinnings(users.size());
+                break;
+            default:
+                System.out.println("No Winner");
+                break;
+        }
+        
+        if (winnings > 0) {
+            prizeFund -= winnings; // Deduct winnings from the prize fund
+            System.out.println("Prize Fund after deduction: £" + prizeFund);
+        }
+        
+        return winnings;
+    }
+    
+    
+
+    
+    
     
     
 
@@ -473,8 +493,9 @@ class LotteryGame {
                 double winnings = checkTicketWinnings(currentUser, userTickets.get(0).getNumbers());
                 if (winnings > 0) {
                     System.out.println(" ");
-                    System.out.println("Congratulations! You've won the jackpot!");
                     System.out.println("Congratulations! You've won £" + winnings + "!");
+                } else if (winnings == 6) {
+                    System.out.println("Congratulations! You've won the jackpot!");
                 } else {
                     System.out.println("Sorry! You did not win this time.");
                 }
@@ -491,7 +512,7 @@ class LotteryGame {
 
     private static void viewGameDetails() {
         System.out.println("Prize Fund: £" + prizeFund);
-        System.out.println("Total Amount Given to Charity: £" + (TICKET_PRICE * users.size() - prizeFund));
+        //System.out.println("Total Amount Given to Charity: £" + (TICKET_PRICE * users.size() - prizeFund));
         System.out.println("-------------------------\n");
     }
 }
