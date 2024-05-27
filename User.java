@@ -6,7 +6,6 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
 
-
 class User {
     String fullname;
     private int age;
@@ -82,7 +81,7 @@ class LotteryTicket {
 
 class LotteryGame {
     private static final double TICKET_PRICE = 2.0; // Initialize the prize fee
-    private static final int MIN_CORRECT_NUMBERS_FOR_PRIZE = 2;
+    //private static final int MIN_CORRECT_NUMBERS_FOR_PRIZE = 2;
     private static double prizeFund = 0.0; // Initialize the prize fund
     private static List<User> users = new ArrayList<>();
     private static List<Integer> winningNumbers;
@@ -94,14 +93,15 @@ class LotteryGame {
         do {
             System.out.println("Welcome to the Lottery System!");
             System.out.println("Choose from these options:");
-            System.out.println("1: Create lottery tickets");
-            System.out.println("2: Create Lucky-dip lottery ticket");
-            System.out.println("3: View purchased tickets");
-            System.out.println("4: Run lottery game (admin only)");
-            System.out.println("5: Report results (admin only)");
-            System.out.println("6: Check if individual tickets won");
-            System.out.println("7: View game details (admin only)");
-            System.out.println("8: Exit");
+            System.out.println("1: Register");
+            System.out.println("2: Create lottery tickets");
+            System.out.println("3: Create Lucky-dip lottery ticket");
+            System.out.println("4: View purchased tickets");
+            System.out.println("5: Run lottery game (admin only)");
+            System.out.println("6: Report results (admin only)");
+            System.out.println("7: Check if individual tickets won");
+            System.out.println("8: View game details (admin only)");
+            System.out.println("9: Exit");
             System.out.println();
 
             try {
@@ -109,37 +109,65 @@ class LotteryGame {
                 option = scanner.nextInt();
                 switch (option) {
                     case 1:
-                        createLotteryTickets(scanner);
+                        registerUser(scanner);
                         break;
                     case 2:
-                        createLuckyDipTicket(scanner);
+                        createLotteryTickets(scanner);
                         break;
                     case 3:
-                        viewPurchasedTickets();
+                        createLuckyDipTicket(scanner);
                         break;
                     case 4:
-                        runLotteryGame(scanner);
+                        viewPurchasedTickets();
                         break;
                     case 5:
-                        reportResults();
+                        runLotteryGame(scanner);
                         break;
                     case 6:
-                        checkWinningTickets(scanner);
+                        reportResults();
                         break;
                     case 7:
-                        viewGameDetails();
+                        checkWinningTickets(scanner);
                         break;
                     case 8:
+                        viewGameDetails();
+                        break;
+                    case 9:
                         System.out.println("Exiting...");
                         break;
                     default:
-                        System.out.println("Invalid choice! Please select again with options 1 to 8.");
+                        System.out.println("Invalid choice! Please select again with options 1 to 9.");
                 }
             } catch (InputMismatchException e) {
-                System.out.println("Invalid choice! Please select again with options 1 to 8.");
-                scanner.next(); // Consume the invalid input
+                System.out.println("Invalid choice! Please select again with options 1 to 9.");
+                scanner.next();
             }
-        } while (option != 8);
+        } while (option != 9);
+    }
+
+    private static void registerUser(Scanner scanner) {
+        System.out.print("Enter your full name: ");
+        String name = scanner.next();
+        System.out.print("Enter your age: ");
+        int age = scanner.nextInt();
+        if (age < 18) {
+            System.out.println("You must be at least 18 years old to play the lottery.");
+            System.out.println("Exiting...");
+            System.exit(0);
+        }
+        int accountId = users.size() + 1;
+        User user = new User(name, age);
+        users.add(user);
+        System.out.println("Registration successful. Your account ID is: " + accountId);
+    }
+
+    private static User findUserById(int accountId) {
+        for (User user : users) {
+            if (user.getAccountId() == accountId) {
+                return user;
+            }
+        }
+        return null;
     }
     
 
@@ -149,64 +177,62 @@ class LotteryGame {
     //3. Using selectNumbers from LotteryTicket class to create 6 unqiue number , using HashSet
     //Once finish step 3 , system will auto access addTicket from User class 
     private static void createLotteryTickets(Scanner scanner) {
-        System.out.print("Enter your full name: ");
-        scanner.nextLine(); 
-        String fullname = scanner.nextLine();
-        System.out.print("Enter your age: ");  
-        int age = scanner.nextInt();
-    
-        if (age < 18) {
-            System.out.println("Only people 18 or over can register to play the lottery");
-            System.out.println("Exiting......");
-            System.exit(0); //forcing system to exit by 0 second
-        } //What if the user enter something not Integer such as Double , Character , String , long , bit , flot?
-    
-    
-        double fee = TICKET_PRICE;
-        System.out.print("Enter the fee (£" + fee + "): £");
-        double balance = scanner.nextDouble();
-    
-        User user = new User(fullname, age);
-        user.addBalance(balance);
-        
-        if (user.getBalance() == fee) {
-            System.out.println("Tickets purchased successfully!");
-            System.out.println("Creating lottery ticket...");
-            LotteryTicket ticket = new LotteryTicket();
-            System.out.println("Enter 6 unique numbers (1-49):");
-    
+        //System.out.print("Enter your full name: ");
+        //scanner.nextLine(); 
+        //String fullname = scanner.nextLine();
+        //System.out.print("Enter your age: ");  
+        //int age = scanner.nextInt();
+
+        System.out.print("Enter your account ID: ");
+        int accountId = scanner.nextInt();
+        User user = findUserById(accountId);
+        if (user == null) {
+            System.out.println("User not found!");
+            return;
+        } else {
+            double fee = TICKET_PRICE;
+            System.out.print("Enter the fee (£" + fee + "): £");
+            double balance = scanner.nextDouble();
+            user.addBalance(balance);
             
-            Set<Integer> chosenNumbers = new HashSet<>();
-            boolean validTicket = false;
-    
-            // Keep prompting the user until a valid ticket is entered
-            while (!validTicket) {
-                // Clear the chosenNumbers set for each new ticket
-                chosenNumbers.clear();
-                for (int i = 0; i < 6; i++) {
-                    int number;
-                    boolean validNumber = false;
-                    do {
-                        // Prompt the user for each number
-                        number = scanner.nextInt();
-                        // Check if the number is within the valid range
-                        if (number < 1 || number > 49) {
-                            System.out.println("Invalid number! Please enter a number between 1 and 49.");
-                        } else if (chosenNumbers.contains(number)) {
-                            // Check if the number is a duplicate number or not 
-                            System.out.println("Duplicate number! Please enter a unique number.");
-                        } else {
-                            // If the number is valid, add it to the chosenNumbers set
-                            chosenNumbers.add(number);
-                            validNumber = true;
-                        }
-                    } while (!validNumber);
+            if (user.getBalance() == fee) {
+                System.out.println("Tickets purchased successfully!");
+                System.out.println("Creating lottery ticket...");
+                LotteryTicket ticket = new LotteryTicket();
+                System.out.println("Enter 6 unique numbers (1-49):");
+        
+                
+                Set<Integer> chosenNumbers = new HashSet<>();
+                boolean validTicket = false;
+        
+                // Keep prompting the user until a valid ticket is entered
+                while (!validTicket) {
+                    // Clear the chosenNumbers set for each new ticket
+                    chosenNumbers.clear();
+                    for (int i = 0; i < 6; i++) {
+                        int number;
+                        boolean validNumber = false;
+                        do {
+                            // Prompt the user for each number
+                            number = scanner.nextInt();
+                            // Check if the number is within the valid range
+                            if (number < 1 || number > 49) {
+                                System.out.println("Invalid number! Please enter a number between 1 and 49.");
+                            } else if (chosenNumbers.contains(number)) {
+                                // Check if the number is a duplicate number or not 
+                                System.out.println("Duplicate number! Please enter a unique number.");
+                            } else {
+                                // If the number is valid, add it to the chosenNumbers set
+                                chosenNumbers.add(number);
+                                validNumber = true;
+                            }
+                        } while (!validNumber);
+                    }
+                    // If the ticket has 6 unique numbers, set validTicket to true to exit the loop
+                    if (chosenNumbers.size() == 6) {
+                        validTicket = true;
+                    } 
                 }
-                // If the ticket has 6 unique numbers, set validTicket to true to exit the loop
-                if (chosenNumbers.size() == 6) {
-                    validTicket = true;
-                } 
-            }
             
             // Once a valid ticket is created, add it to the user's list of tickets
             ticket.getNumbers().addAll(chosenNumbers);
@@ -223,21 +249,22 @@ class LotteryGame {
             System.out.println("Insufficient balance to buy tickets!");
         }
     }
-    
-    
+}
     
 
     private static void createLuckyDipTicket(Scanner scanner) {
-        System.out.print("Enter your full name: ");
-        scanner.nextLine(); 
-        String fullname = scanner.nextLine();
-        System.out.print("Enter your age: ");
-        int age = scanner.nextInt();
+        //System.out.print("Enter your full name: ");
+        //scanner.nextLine(); 
+        //String fullname = scanner.nextLine();
+        //System.out.print("Enter your age: ");
+        //int age = scanner.nextInt();
         
-        if (age < 18) {
-            System.out.println("Only people 18 or over can register to play the lottery");
-            System.out.println("Exiting......");
-            System.exit(0); // Exit the program if user is under 18
+        System.out.print("Enter your account ID: ");
+        int accountId = scanner.nextInt();
+        User user = findUserById(accountId);
+        if (user == null) {
+            System.out.println("User not found!");
+            return;
         }
     
         double fee = TICKET_PRICE;
@@ -250,10 +277,8 @@ class LotteryGame {
         }
         
         // Move the user creation outside the loop to avoid only the latest user is retained in the users list which lead to no user found
-        User user = new User(fullname, age);
         user.addBalance(balance);
         
-
         while (user.getBalance() == fee) {
             System.out.println("-------------------------\n");
             System.out.println("Tickets purchased successfully!");
@@ -293,29 +318,35 @@ class LotteryGame {
     
     private static void viewPurchasedTickets() {
         if (users.isEmpty()) {
-            System.out.println("\nNo users found.");
-            System.out.println("\n");
+            System.out.println("\nNo users found.\n");
             return;
         }
     
-        boolean foundTickets = false;
+        Set<Integer> processedUserIds = new HashSet<>(); // Set to keep track of processed user IDs
         for (User user : users) {
-            System.out.println("------------");
-            System.out.println("\nUser: " + user.fullname);
-            List<LotteryTicket> userTickets = user.getTickets();
-            if (!userTickets.isEmpty()) {
-                foundTickets = true;
-                for (LotteryTicket ticket : userTickets) {
-                    System.out.println("Ticket Numbers: " + ticket.getNumbers());
+            int userId = user.getAccountId();
+            if (!processedUserIds.contains(userId)) { // Check if user has already been processed
+                System.out.println("------------");
+                System.out.println("\nUser: " + userId);
+                List<LotteryTicket> userTickets = user.getTickets();
+                if (!userTickets.isEmpty()) {
+                    // Print user's tickets
+                    for (LotteryTicket ticket : userTickets) {
+                        System.out.println("Ticket Numbers: " + ticket.getNumbers());
+                    }
                 }
+                processedUserIds.add(userId); // Mark user as processed
             }
-            System.out.println("------------\n");
         }
     
-        if (!foundTickets) {
+        System.out.println("------------\n");
+    
+        if (processedUserIds.isEmpty()) {
             System.out.println("No tickets purchased yet.");
         }
     }
+    
+    
     
     
 
@@ -337,35 +368,44 @@ class LotteryGame {
 
     //Has a problem
     private static double checkTicketWinnings(User user, List<Integer> ticketNumbers) {
-        int correctNumbers = 0;
-        for (int number : ticketNumbers) {
-            if (winningNumbers.contains(number)) {
-                correctNumbers++;
-            }
+    int correctNumbers = 0;
+    for (int number : ticketNumbers) {
+        if (winningNumbers.contains(number)) {
+            correctNumbers++;
         }
-        double winnings = 0.0;
-        switch (correctNumbers) {
-            case 2:
-                System.out.println("Congratulations! You've won a lucky dip for the next game!");
-                break;
-            case 3:
-                System.out.println("Congratulations! You've won £2!");
-                winnings = 2.0;
-                break;
-            case 4:
-            case 5:
-                System.out.println("Congratulations! You've won £4!");
-                winnings = 4.0;
-                break;
-            case 6:
-                System.out.println("Congratulations! You've won the jackpot!");
-                winnings = jackpotWinnings(users.size());
-                break;
-            default:
-                System.out.println("Sorry! You did not win this time.");
-        }
-        return winnings;
     }
+    double winnings = 0.0;
+    boolean wonJackpot = false; // Flag to track if the user won the jackpot
+    switch (correctNumbers) {
+        case 2:
+            System.out.println("Congratulations! You've won a lucky dip for the next game!");
+            break;
+        case 3:
+            System.out.println("Congratulations! You've won £2!");
+            winnings = 2.0;
+            break;
+        case 4:
+        case 5:
+            System.out.println("Congratulations! You've won £4!");
+            winnings = 4.0;
+            break;
+        case 6:
+            if (!wonJackpot) { // Check if the jackpot has not been won yet
+                //System.out.println("Congratulations! You've won the jackpot!");
+                wonJackpot = true; // Set the flag to true since the jackpot has been won
+            }
+            winnings = jackpotWinnings(users.size());
+            break;
+        default:
+            System.out.println("Sorry! You did not win this time.");
+    }
+    if (winnings > 0 && !wonJackpot) { // Only display the winnings if the jackpot has not been won
+        System.out.println("Congratulations! You've won £" + winnings + "!");
+    }
+    return winnings;
+}
+
+    
 
 
     private static double jackpotWinnings(int numPlayers) {
@@ -380,59 +420,73 @@ class LotteryGame {
     private static void reportResults() {
         System.out.println("Winning Numbers: " + winningNumbers);
         double totalWinnings = 0.0;
+        Set<User> processedUsers = new HashSet<>(); // Set to keep track of processed users
         for (User user : users) {
-            System.out.println("User: " + user.fullname);
-            double userWinnings = 0.0;
-            for (LotteryTicket ticket : user.getTickets()) {
-                List<Integer> numbers = ticket.getNumbers();
-                double ticketWinnings = checkTicketWinnings(user, numbers);
-                userWinnings += ticketWinnings;
-                if (ticketWinnings > 0) {
-                    System.out.println("Ticket Numbers: " + numbers + " - Correct Numbers: " + (numbers.size() - (6 - numbers.size()))
-                            + " - Winnings: £" + ticketWinnings);
+            if (!processedUsers.contains(user)) { // Check if user has already been processed
+                System.out.println("-----------------------------------------------------");
+                System.out.println("User: " + user.fullname);
+                double userWinnings = 0.0;
+                for (LotteryTicket ticket : user.getTickets()) {
+                    List<Integer> numbers = ticket.getNumbers();
+                    double ticketWinnings = checkTicketWinnings(user, numbers);
+                    userWinnings += ticketWinnings;
+                    if (ticketWinnings > 0) {
+                        System.out.println("Ticket Numbers: " + numbers + " - Correct Numbers: " + (numbers.size() - (6 - numbers.size()))
+                                + " - Winnings: £" + ticketWinnings);
+                    }
                 }
+                System.out.println("Total Winnings: £" + userWinnings);
+                totalWinnings += userWinnings;
+                processedUsers.add(user); // Mark user as processed
             }
-            System.out.println("Total Winnings: £" + userWinnings);
-            totalWinnings += userWinnings;
         }
         if (totalWinnings < 6.0 && prizeFund > 0) {
             rollOverPrizeFund();
         }
     }
-
     
+    
+
     private static void rollOverPrizeFund() {
         System.out.println("No jackpot winners. Prize fund rolls over to the next game.");
     }
 
     private static void checkWinningTickets(Scanner scanner) {
-        System.out.print("Enter your full name: ");
-        scanner.nextLine();
-        String fullname = scanner.nextLine();
+        System.out.print("Enter your account ID: ");
+        int accountId = scanner.nextInt();
+    
         User currentUser = null;
         for (User user : users) {
-            if (user.fullname.equals(fullname)) {
+            if (user.getAccountId() == accountId) {
                 currentUser = user;
                 break;
             }
         }
+    
         if (currentUser != null) {
-            System.out.print("Enter the numbers of your ticket: ");
-            List<Integer> ticketNumbers = new ArrayList<>();
-            for (int i = 0; i < 6; i++) {
-                int number = scanner.nextInt();
-                ticketNumbers.add(number);
-            }
-            double winnings = checkTicketWinnings(currentUser, ticketNumbers);
-            if (winnings > 0) {
-                System.out.println("Congratulations! You've won £" + winnings + "!");
+            List<LotteryTicket> userTickets = currentUser.getTickets();
+            if (!userTickets.isEmpty()) {
+                System.out.print("Your ticket is: ");
+                for (LotteryTicket ticket : userTickets) {
+                    System.out.print(ticket.getNumbers());
+                }
+                double winnings = checkTicketWinnings(currentUser, userTickets.get(0).getNumbers());
+                if (winnings > 0) {
+                    System.out.println(" ");
+                    System.out.println("Congratulations! You've won the jackpot!");
+                    System.out.println("Congratulations! You've won £" + winnings + "!");
+                } else {
+                    System.out.println("Sorry! You did not win this time.");
+                }
             } else {
-                System.out.println("Sorry! You did not win this time.");
+                System.out.println("No tickets found for this user.");
             }
         } else {
             System.out.println("User not found!");
         }
     }
+    
+    
 
 
     private static void viewGameDetails() {
@@ -440,61 +494,4 @@ class LotteryGame {
         System.out.println("Total Amount Given to Charity: £" + (TICKET_PRICE * users.size() - prizeFund));
         System.out.println("-------------------------\n");
     }
-
-
-    /* 
-    private static void reportResults() {
-        System.out.println("Winning Numbers: " + winningNumbers);
-        // Check each user's tickets for winning numbers
-        for (User user : users) {
-            System.out.println("User name : " + user.fullname);
-            for (LotteryTicket ticket : user.getTickets()) {
-                List<Integer> numbers = ticket.getNumbers();
-                int correctNumbers = 0;
-                for (int number : numbers) {
-                    if (winningNumbers.contains(number)) {
-                        correctNumbers++;
-                    }
-                }
-                if (correctNumbers >= MIN_CORRECT_NUMBERS_FOR_PRIZE) {
-                    System.out.println("Ticket Numbers: " + numbers + " - Correct Numbers: " + correctNumbers);
-                }
-            }
-        }
-    }
-
-    private static void checkWinningTickets(Scanner scanner) {
-        System.out.println("Enter your full name:");
-        scanner.nextLine(); // Consume newline
-        String fullname = scanner.nextLine();
-        User currentUser = null;
-        for (User user : users) {
-            if (user.fullname.equals(fullname)) {
-                currentUser = user;
-                break;
-            }
-        }
-        if (currentUser != null) {
-            System.out.println("Enter the numbers of your ticket:");
-            List<Integer> ticketNumbers = new ArrayList<>();
-            for (int i = 0; i < 6; i++) {
-                int number = scanner.nextInt();
-                ticketNumbers.add(number);
-            }
-            int correctNumbers = 0;
-            for (int number : ticketNumbers) {
-                if (winningNumbers.contains(number)) {
-                    correctNumbers++;
-                }
-            }
-            if (correctNumbers >= MIN_CORRECT_NUMBERS_FOR_PRIZE) {
-                System.out.println("Congratulations! You have won with " + correctNumbers + " correct numbers!");
-            } else {
-                System.out.println("Sorry! You did not win this time.");
-            }
-        } else {
-            System.out.println("User not found!");
-        }
-    }
-    */
 }
