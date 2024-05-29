@@ -27,7 +27,7 @@ class User {
         this.balance -= amount;
     }
 
-    public void addBalance(double amount) {
+    public void setBalance(double amount) {
         this.balance += amount;
     }
 
@@ -35,7 +35,7 @@ class User {
         return balance;
     }
 
-    public void addTicket(LotteryTicket ticket) {
+    public void setTicket(LotteryTicket ticket) {
         tickets.add(ticket);
     }
 
@@ -175,7 +175,7 @@ class LotteryGame {
     //1. How much they like to play (auto substract £2 as fee and put it into prize pool)
     //2. Number of tickets they like to buy
     //3. Using selectNumbers from LotteryTicket class to create 6 unqiue number , using HashSet
-    //Once finish step 3 , system will auto access addTicket from User class 
+    //Once finish step 3 , system will auto access setTicket from User class 
     private static void createLotteryTickets(Scanner scanner) {
         //System.out.print("Enter your full name: ");
         //scanner.nextLine(); 
@@ -193,7 +193,7 @@ class LotteryGame {
             double fee = TICKET_PRICE;
             System.out.print("Enter the fee (£" + fee + "): £");
             double balance = scanner.nextDouble();
-            user.addBalance(balance);
+            user.setBalance(balance);
             
             if (user.getBalance() == fee) {
                 System.out.println("Tickets purchased successfully!");
@@ -236,7 +236,7 @@ class LotteryGame {
             
             // Once a valid ticket is created, add it to the user's list of tickets
             ticket.getNumbers().addAll(chosenNumbers);
-            user.addTicket(ticket);
+            user.setTicket(ticket);
             // Add the user to the list of users
             users.add(user);
             // Add the ticket fee to the prize fund
@@ -277,7 +277,7 @@ class LotteryGame {
         }
         
         // Move the user creation outside the loop to avoid only the latest user is retained in the users list which lead to no user found
-        user.addBalance(balance);
+        user.setBalance(balance);
         
         while (user.getBalance() == fee) {
             System.out.println("-------------------------\n");
@@ -295,7 +295,7 @@ class LotteryGame {
             }
     
             ticket.getNumbers().addAll(chosenNumbers);
-            user.addTicket(ticket); // Add the ticket to the user's list of tickets
+            user.setTicket(ticket); // Add the ticket to the user's list of tickets
             System.out.println("Lucky-dip ticket created with numbers: " + ticket.getNumbers());
             addToPrizeFund(fee);
             //System.out.println("Your balance after ticket purchase: £" + (user.getBalance() - fee));
@@ -491,7 +491,7 @@ class LotteryGame {
                     System.out.print(ticket.getNumbers());
                 }
                 double winnings = checkTicketWinnings(currentUser, userTickets.get(0).getNumbers());
-                if (winnings > 0) {
+                if (winnings > 1 ) {
                     System.out.println(" ");
                     System.out.println("Congratulations! You've won £" + winnings + "!");
                 } else if (winnings == 6) {
