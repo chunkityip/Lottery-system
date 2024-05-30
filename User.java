@@ -1,3 +1,4 @@
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.InputMismatchException;
@@ -284,7 +285,7 @@ class LotteryGame {
 
             System.out.println("Creating lucky-dip ticket...");
             LotteryTicket ticket = new LotteryTicket();
-            Random random = new Random();
+            Random random = new SecureRandom();
     
             // Generate 6 unique random numbers
             Set<Integer> chosenNumbers = new HashSet<>();
