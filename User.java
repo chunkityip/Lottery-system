@@ -47,7 +47,6 @@ class User {
         return accountId;
     }
 
-
 }
 
 class LotteryTicket {
