@@ -1,3 +1,4 @@
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.InputMismatchException;
@@ -5,6 +6,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 
 class User {
     String fullname;
@@ -14,6 +18,9 @@ class User {
     private int accountId;
     private static int luckyDipWins;
     private static int lastAccountId = 0;
+    static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    
+
 
     public User(String fullname, int age) {
         this.fullname = fullname;
@@ -52,6 +59,7 @@ class User {
 class LotteryTicket {
     private List<Integer> numbers;
 
+
     public LotteryTicket() {
         numbers = new ArrayList<>();
     }
@@ -80,6 +88,7 @@ class LotteryTicket {
 
 class LotteryGame {
     private static final double TICKET_PRICE = 2.0; // Initialize the prize fee
+    private static final DateTimeFormatter DATE_FORMATTER = User.DATE_FORMATTER;
     //private static final int MIN_CORRECT_NUMBERS_FOR_PRIZE = 2;
     private static double prizeFund = 0.0; // Initialize the prize fund
     private static List<User> users = new ArrayList<>();
@@ -108,6 +117,7 @@ class LotteryGame {
                 option = scanner.nextInt();
                 switch (option) {
                     case 1:
+                    // Implement register logic
                         registerUser(scanner);
                         break;
                     case 2:
@@ -147,18 +157,38 @@ class LotteryGame {
     private static void registerUser(Scanner scanner) {
         System.out.print("Enter your full name: ");
         String name = scanner.next();
-        System.out.print("Enter your age: ");
-        int age = scanner.nextInt();
-        if (age < 18) {
-            System.out.println("You must be at least 18 years old to play the lottery.");
+        LocalDate birthDate = askForBirthDate(scanner , DATE_FORMATTER);
+        if (isUnderage(birthDate)) {
+            System.out.println("You must be at least 18 years old to register.");
             System.out.println("Exiting...");
             System.exit(0);
         }
         int accountId = users.size() + 1;
-        User user = new User(name, age);
+        User user = new User(name, calculateAge(birthDate));
         users.add(user);
         System.out.println("Registration successful. Your account ID is: " + accountId);
     }
+
+    private static int calculateAge(LocalDate birthDate) {
+        LocalDate today = LocalDate.now();
+        return Period.between(birthDate, today).getYears();
+    }
+
+    private static LocalDate askForBirthDate(Scanner scanner , DateTimeFormatter formatter) {
+        System.out.print("Enter your birthdate (yyyy-MM-dd): ");
+        String birthDateInput = scanner.next();
+        return LocalDate.parse(birthDateInput, formatter);
+    }
+    
+
+    private static boolean isUnderage(LocalDate birthDate) {
+        LocalDate today = LocalDate.now();
+        LocalDate eighteenYearsAgo = today.minusYears(18);
+        return birthDate.isAfter(eighteenYearsAgo);
+    }
+
+
+
 
     private static User findUserById(int accountId) {
         for (User user : users) {
@@ -365,7 +395,6 @@ class LotteryGame {
         System.out.println("Winning numbers set as: " + winningNumbers);
     }
 
-    //Has a problem
     private static double checkTicketWinnings(User user, List<Integer> ticketNumbers) {
         int correctNumbers = 0;
         for (int number : ticketNumbers) {
@@ -373,12 +402,13 @@ class LotteryGame {
                 correctNumbers++;
             }
         }
-        return correctNumbers;
+        return calculateWinnings(correctNumbers); // Calculate the winnings based on the number of correct numbers
     }
+    
 
     
 
-
+    /* 
     private static double jackpotWinnings(int numPlayers) {
         double jackpot = prizeFund / numPlayers;
         if (jackpot < 6.0) {
@@ -387,6 +417,7 @@ class LotteryGame {
         prizeFund -= jackpot;
         return jackpot;
     }
+    */
 
     private static void reportResults() {
         System.out.println("Winning Numbers: " + winningNumbers);
@@ -404,6 +435,8 @@ class LotteryGame {
                     userWinnings += ticketWinnings; // Update the user's total winnings
                     if (correctNumbers != 2 && correctNumbers != 0) { // Check if correctNumbers is neither 2 nor 0
                         System.out.println("Ticket Numbers: " + numbers + " - Correct Numbers: " + correctNumbers + " - Winnings: £" + ticketWinnings);
+                    } else if (correctNumbers == 6) {
+                        System.out.println("Congratulations! You've won the jackpot!");
                     }
                 }
                 System.out.println("Total Winnings: £" + userWinnings); // Concatenate the double to a String here
@@ -432,40 +465,33 @@ class LotteryGame {
         double winnings = 0.0;
         switch ((int) correctNumbers) { // Convert double to int for switch statement
             case 2:
-                System.out.println("2 Number match! You get a free lucky dip!");
+                winnings = 1.0; // Prize for 2 correct numbers
                 break;
             case 3:
-                winnings = 2.0;
+                winnings = 2.0; // Prize for 3 correct numbers
                 break;
             case 4:
-                winnings = 4.0;
+                winnings = 4.0; // Prize for 4 correct numbers
                 break;
             case 5:
-                winnings = 6.0;
+                winnings = 8.0; // Prize for 5 correct numbers
                 break;
             case 6:
-                winnings = jackpotWinnings(users.size());
+                System.out.println("Congratulations! You've won the jackpot!");
                 break;
             default:
-                System.out.println("No Winner");
+                // No prize for 1 or fewer correct numbers
                 break;
         }
-        
+    
         if (winnings > 0) {
             prizeFund -= winnings; // Deduct winnings from the prize fund
             System.out.println("Prize Fund after deduction: £" + prizeFund);
         }
-        
+    
         return winnings;
     }
     
-    
-
-    
-    
-    
-    
-
     private static void rollOverPrizeFund() {
         System.out.println("No jackpot winners. Prize fund rolls over to the next game.");
     }
@@ -489,26 +515,35 @@ class LotteryGame {
                 for (LotteryTicket ticket : userTickets) {
                     System.out.print(ticket.getNumbers());
                 }
-                double winnings = checkTicketWinnings(currentUser, userTickets.get(0).getNumbers());
-                if (winnings > 1 ) {
-                    System.out.println(" ");
-                    System.out.println("Congratulations! You've won £" + winnings + "!");
-                } else if (winnings == 6) {
-                    System.out.println("Congratulations! You've won the jackpot!");
-                } else {
-                    System.out.println("Sorry! You did not win this time.");
+                double correctNumbers = checkTicketWinnings(currentUser, userTickets.get(0).getNumbers());
+                double winnings = calculateWinnings(correctNumbers);
+
+                int winningsAsInt = (int) winnings;
+
+                switch (winningsAsInt) {
+                    case 6:
+                        System.out.println("Congratulations! You've won the jackpot!");
+                        break;
+                    case 5:
+                    case 4:
+                    case 3:
+                    case 2:
+                        System.out.println("Congratulations! You've won £" + winnings + "!");
+                        break;
+                    default:
+                        System.out.println("Sorry! You did not win this time.");
+                        break;
                 }
+
             } else {
                 System.out.println("No tickets found for this user.");
-            }
+                }
         } else {
             System.out.println("User not found!");
-        }
+            }
     }
     
     
-
-
     private static void viewGameDetails() {
         System.out.println("Prize Fund: £" + prizeFund);
         //System.out.println("Total Amount Given to Charity: £" + (TICKET_PRICE * users.size() - prizeFund));
