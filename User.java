@@ -1,3 +1,4 @@
+import java.security.SecureRandom;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -315,7 +316,7 @@ class LotteryGame {
 
             System.out.println("Creating lucky-dip ticket...");
             LotteryTicket ticket = new LotteryTicket();
-            Random random = new Random();
+            Random random = new SecureRandom();
     
             // Generate 6 unique random numbers
             Set<Integer> chosenNumbers = new HashSet<>();
